@@ -1,10 +1,28 @@
 cmake_minimum_required(VERSION 3.8.2) # setting this is required
 project(Vilici VERSION 0.0.0 LANGUAGES CXX) # this sets the project name
 
+set(default_build_type "Release")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  set(default_build_type "Debug")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(
+    STATUS
+      "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE
+      "${default_build_type}"
+      CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
 set(CMAKE_CXX_CPPCHECK "cppcheck")
 set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "iwyu-tool")
+
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_DEFINE)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -D${CMAKE_BUILD_TYPE_DEFINE})
 
 # ##############################################################################
 # file globbing ##############################################################
@@ -16,7 +34,6 @@ file(GLOB_RECURSE
      sources
      src/*.cpp
      src/*.h)
-file(GLOB_RECURSE sources_test test/*.cpp)
 file(GLOB_RECURSE data resources/*)
 # You can use set(sources src/main.cpp) etc if you don't want to use globbing to
 # find files automatically.
