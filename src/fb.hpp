@@ -5,14 +5,21 @@
 #include <linux/fb.h>
 
 namespace fb {
-extern uint32_t *fb;
+extern uint32_t *fb, *buff;
 extern fb_var_screeninfo info;
+
+inline double horiz_dpi() { return info.xres / info.width; }
+inline double vert_dpi() { return info.yres / info.height; }
 
 bool init();
 bool term();
 
 void swap();
 void clear();
+
+inline void px(unsigned long x, unsigned long y, uint32_t c) {
+  buff[x + info.xres * y] = c;
+}
 
 } // namespace fb
 

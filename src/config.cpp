@@ -38,7 +38,12 @@ bool config::load(const std::string &config_path) {
            {"color15", "#ffffff"},
            {"foreground", "#ffffff"},
            {"background", "#000000"}}},
-         {"font", {{"family", "Terminus"}, {"size", "12"}}}};
+         {"font",
+          {{"name", "DEC Terminal"},
+           {"regular", "Regular"},
+           {"bold", "Bold"},
+           {"italic", "Italic"},
+           {"bold italic", "Bold Italic"}}}};
   std::fstream file(config_path);
   if (file.is_open()) {
     std::string line;
@@ -57,7 +62,7 @@ bool config::load(const std::string &config_path) {
         if (cfg.find(section) == cfg.end()) {
           cfg[section] = std::map<std::string, Value>();
         }
-      } else {
+      } else if (line.front() != ';') {
         std::size_t pos = line.find('=');
         std::string key = line.substr(0, pos);
         std::string val = line.substr(pos + 1);
