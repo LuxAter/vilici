@@ -1,5 +1,5 @@
-#ifndef VILICI_FB_H_
-#define VILICI_FB_H_
+#ifndef VILICI_FB_HPP_
+#define VILICI_FB_HPP_
 
 #include <cstdint>
 #include <linux/fb.h>
@@ -11,6 +11,9 @@ extern fb_var_screeninfo info;
 bool init();
 bool term();
 
+void swap();
+void clear();
+
 } // namespace fb
 
-#endif // VILICI_FB_H_
+#endif // VILICI_FB_HPP_

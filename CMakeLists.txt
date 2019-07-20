@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.8.2) # setting this is required
 project(Vilici VERSION 0.0.0 LANGUAGES CXX) # this sets the project name
 
 set(default_build_type "Release")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   set(default_build_type "Debug")
 endif()
@@ -14,6 +15,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "${default_build_type}"
       CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
+  execute_process(COMMAND ${CMAKE_COMMAND}
+                          -E
+                          copy_if_different
+                          ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json
+                          ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -68,8 +76,18 @@ file(COPY ${data} DESTINATION resources)
 # dependencies ###############################################################
 # ##############################################################################
 
+include(ExternalProject)
 find_package(Threads REQUIRED)
-target_link_libraries(vilici ${CMAKE_THREAD_LIBS_INIT})
+find_package(Fontconfig REQUIRED)
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/freetype2)
+target_include_directories(
+  vilici
+  PRIVATE ${PROJECT_SOURCE_DIR}/external/freetype2/include
+          ${Fontconfig_INCLUDE_DIRS})
+target_link_libraries(vilici
+                      ${CMAKE_THREAD_LIBS_INIT}
+                      freetype
+                      ${Fontconfig_LIBRARIES})
 
 # ##############################################################################
 # packaging ##################################################################

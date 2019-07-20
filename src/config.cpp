@@ -1,103 +1,76 @@
-#include "config.h"
+#include "config.hpp"
 
+#include <algorithm>
 #include <cstdio>
-#include <cstring>
+#include <fstream>
+#include <string>
 
-#include "color.h"
+#include "color.hpp"
 
 namespace config {
-Config cfg;
+std::map<std::string, std::map<std::string, Value>> cfg;
 } // namespace config
 
-bool config::load(const char *config_path) {
-  printf(">>%s<<\n", config_path);
-  FILE *config_file = std::fopen(config_path, "r");
-  if (config_path == NULL) {
-    cfg = Config{{0x000000, 0xcd0000, 0x00cd00, 0xcdcd00, 0x0000ee, 0xcd00cd,
-                  0x00cdcd, 0xe5e5e5, 0x7f7f7f, 0xff0000, 0x00ff00, 0xffff00,
-                  0x5c5cff, 0xff00ff, 0x00ffff, 0xffffff},
-                 0x000000,
-                 0xffffff,
-                 "terminal",
-                 12};
-    return true;
-  }
-  char *line;
-  size_t line_size = 0;
-  ssize_t line_count = 0;
-  Config::Sections section = Config::Sections::NONE;
-  line_count = getline(&line, &line_size, config_file);
-  while (line_count > 0) {
-    size_t pos = 0;
-    if (line[pos] == '[') {
-      pos++;
-      char sec[255];
-      size_t id = 0;
-      while (pos < line_size && line[pos] != ']') {
-        sec[id] = line[pos];
-        id++;
-        pos++;
-      }
-      sec[id] = 0;
-      if (strncmp(sec, "color", 5) == 0) {
-        section = Config::Sections::COLOR;
-      } else if (strncmp(sec, "font", 4) == 0) {
-        section = Config::Sections::FONT;
-      } else {
-        section = Config::Sections::NONE;
-      }
-    } else {
-      char key[255];
-      size_t id = 0;
-      while (pos < line_size && line[pos] != '=' && line[pos] != '\n') {
-        key[id] = line[pos];
-        id++;
-        pos++;
-      }
-      pos++;
-      key[id] = 0;
-      id = 0;
-      char val[255];
-      while (pos < line_size && line[pos] != '=' && line[pos] != '\n') {
-        val[id] = line[pos];
-        id++;
-        pos++;
-      }
-      val[id] = 0;
+void trimwhitespace(char *str) {
+  while (str[0] == ' ')
+    for (size_t i = strlen(str) - 1; i > 0; --i) {
+      str[i] = str[i - 1];
+    }
+}
 
-      switch (section) {
-      case Config::Sections::COLOR: {
-        if (strncmp(key, "background", 10) == 0) {
-          cfg.background = rgb(val);
-        } else if (strncmp(key, "foreground", 10) == 0) {
-          cfg.foreground = rgb(val);
-        } else if (strncmp(key, "color", 5) == 0 && strlen(key) == 5) {
-          cfg.foreground = rgb(val);
-        } else if (strlen(key) > 5) {
-          int idx = 0;
-          sscanf(key, "color%d", &idx);
-          cfg.colors[idx] = rgb(val);
+bool config::load(const std::string &config_path) {
+  cfg = {{"color",
+          {{"color0", "#000000"},
+           {"color1", "#cd0000"},
+           {"color2", "#00cd00"},
+           {"color3", "#cdcd00"},
+           {"color4", "#0000ee"},
+           {"color5", "#cd00cd"},
+           {"color6", "#00cdcd"},
+           {"color7", "#e5e5e5"},
+           {"color8", "#7f7f7f"},
+           {"color9", "#ff0000"},
+           {"color10", "#00ff00"},
+           {"color11", "#ffff00"},
+           {"color12", "#5c5cff"},
+           {"color13", "#ff00ff"},
+           {"color14", "#00ffff"},
+           {"color15", "#ffffff"},
+           {"foreground", "#ffffff"},
+           {"background", "#000000"}}},
+         {"font", {{"family", "Terminus"}, {"size", "12"}}}};
+  std::fstream file(config_path);
+  if (file.is_open()) {
+    std::string line;
+    std::string section = "";
+    while (std::getline(file, line)) {
+      line.erase(line.begin(),
+                 std::find_if(line.begin(), line.end(),
+                              [](int ch) { return !std::isspace(ch); }));
+      line.erase(std::find_if(line.rbegin(), line.rend(),
+                              [](int ch) { return !std::isspace(ch); })
+                     .base(),
+                 line.end());
+      if (line.front() == '[' && line.back() == ']') {
+        line = line.substr(1, line.size() - 2);
+        section = line;
+        if (cfg.find(section) == cfg.end()) {
+          cfg[section] = std::map<std::string, Value>();
         }
-        break;
-      }
-      case Config::Sections::FONT: {
-        if (strncmp(key, "family", 6) == 0) {
-          cfg.font_name = val;
-        } else if (strncmp(key, "size", 4) == 0 ||
-                   ((strncmp(key, "px", 2) == 0 ||
-                     strncmp(key, "pt", 2) == 0) &&
-                    strlen(key) == 0)) {
-          cfg.font_size = atol(val);
-        }
-        break;
-      }
-      default: {
-        break;
-      }
+      } else {
+        std::size_t pos = line.find('=');
+        std::string key = line.substr(0, pos);
+        std::string val = line.substr(pos + 1);
+        key.erase(std::find_if(key.rbegin(), key.rend(),
+                               [](int ch) { return !std::isspace(ch); })
+                      .base(),
+                  key.end());
+        val.erase(val.begin(), std::find_if(val.begin(), val.end(), [](int ch) {
+                    return !std::isspace(ch);
+                  }));
+        cfg[section][key] = Value{val};
       }
     }
-    line_count = getline(&line, &line_size, config_file);
   }
-  std::fclose(config_file);
   return true;
 }
