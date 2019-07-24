@@ -8,8 +8,8 @@ namespace fb {
 extern uint32_t *fb, *buff;
 extern fb_var_screeninfo info;
 
-inline double horiz_dpi() { return info.xres / info.width; }
-inline double vert_dpi() { return info.yres / info.height; }
+inline double horiz_dpi() { return info.xres / (0.0393701 * info.width); }
+inline double vert_dpi() { return info.yres / (0.0393701 * info.height); }
 
 bool init();
 bool term();

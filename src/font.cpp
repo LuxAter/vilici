@@ -148,6 +148,7 @@ bool font::init() {
     long pt = static_cast<long>(config::cfg["font"]["pt"].as<double>() * 64);
     unsigned horiz_dpi = static_cast<unsigned>(fb::horiz_dpi());
     unsigned vert_dpi = static_cast<unsigned>(fb::vert_dpi());
+    std::cout << pt << ':' << horiz_dpi << 'x' << vert_dpi << '\n';
     if (FT_Set_Char_Size(regular_, 0, pt, horiz_dpi, vert_dpi)) {
       warning("Failed to set Regular font face to {}pt size", pt);
     }
@@ -190,8 +191,6 @@ void font::render(unsigned &cx, unsigned &cy, const std::string &text) {
   unsigned y = cy;
   for (uint32_t i = 0; i < wtext.size(); ++i) {
     uint32_t index = FT_Get_Char_Index(*face, wtext[i]);
-    std::cout << wtext[i] << "??";
-    std::wcout << wtext[i] << std::endl;
     if (kerning && prev && index) {
       FT_Vector delta;
       FT_Get_Kerning(*face, prev, index, FT_KERNING_DEFAULT, &delta);
@@ -203,11 +202,9 @@ void font::render(unsigned &cx, unsigned &cy, const std::string &text) {
       continue;
     uint32_t offset = offset_ - ((*face)->glyph->metrics.horiBearingY >> 6);
     FT_Bitmap *bitmap = &(*face)->glyph->bitmap;
-    std::cout << bitmap->width << "x" << bitmap->rows << '\n';
     for (uint16_t by = 0; by < bitmap->rows; ++by) {
       for (uint16_t bx = 0; bx < bitmap->width; ++bx) {
         if (bitmap->buffer[by * bitmap->width + bx] != 0) {
-          // std::cout << '#';
           double dr = ((base_fg >> 16) & 0xFF) - ((base_bg >> 16) & 0xFF);
           double dg = ((base_fg >> 8) & 0xFF) - ((base_bg >> 8) & 0xFF);
           double db = ((base_fg)&0xFF) - ((base_bg)&0xFF);
@@ -215,18 +212,12 @@ void font::render(unsigned &cx, unsigned &cy, const std::string &text) {
           uint8_t green = (base_bg >> 8) & 0xFF;
           uint8_t blue = base_bg & 0xFF;
           double perc = bitmap->buffer[by * bitmap->width + bx] / 255.0;
-          uint32_t color = (static_cast<uint32_t>((dr * perc) + red) << 16) ||
-                           (static_cast<uint32_t>((dg * perc) + green) << 8) ||
+          uint32_t color = (static_cast<uint32_t>((dr * perc) + red) << 16) |
+                           (static_cast<uint32_t>((dg * perc) + green) << 8) |
                            (static_cast<uint32_t>((db * perc) + blue) << 0);
-          fb::buff[x + bx + (y + offset + by) * fb::info.xres] = 0xffffff;
-          // fb::buff[x + bx +
-          //          (y - (*face)->glyph->bitmap_top + by) * fb::info.xres] =
-          //     0xffffff;
-        } else {
-          // std::cout << '.';
+          fb::buff[x + bx + (y + offset + by) * fb::info.xres] = color;
         }
       }
-      // std::cout << std::endl;
     }
     x += (*face)->glyph->advance.x >> 6;
   }

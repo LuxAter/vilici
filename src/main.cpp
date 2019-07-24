@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   font::init();
   fb::clear();
   fb::swap();
-  unsigned x = 25, y = 30;
+  unsigned x = 0, y = 0;
   for (std::size_t i = 0; i < fb::info.xres; ++i) {
     fb::px(i, y, 0xffffff);
   }

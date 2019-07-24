@@ -20,8 +20,6 @@ inline uint32_t rgb(const char *hex) {
   strncpy(rs, hex + 0 + pound, 2);
   strncpy(gs, hex + 2 + pound, 2);
   strncpy(bs, hex + 4 + pound, 2);
-  printf("%d<<\n", pound);
-  printf("%s:%2s,%2s,%2s:\n", hex, rs, gs, bs);
   return (strtoul(rs, NULL, 16) << 16) | (strtoul(gs, NULL, 16) << 8) |
          (strtoul(bs, NULL, 16) << 0);
 }
