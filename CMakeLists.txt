@@ -25,9 +25,8 @@ if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
-set(CMAKE_CXX_CPPCHECK "cppcheck")
-set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "iwyu-tool")
+# set(CMAKE_CXX_CLANG_TIDY "clang-tidy") set(CMAKE_CXX_CPPCHECK "cppcheck")
+# set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "iwyu-tool")
 
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_DEFINE)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -D${CMAKE_BUILD_TYPE_DEFINE})
@@ -79,15 +78,21 @@ file(COPY ${data} DESTINATION resources)
 include(ExternalProject)
 find_package(Threads REQUIRED)
 find_package(Fontconfig REQUIRED)
+find_package(Libinput REQUIRED)
+find_package(udev REQUIRED)
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/freetype2)
 target_include_directories(
   vilici
   PRIVATE ${PROJECT_SOURCE_DIR}/external/freetype2/include
-          ${Fontconfig_INCLUDE_DIRS})
+          ${Fontconfig_INCLUDE_DIRS}
+          ${Libinput_INCLUDE_DIRS}
+          ${UDEV_INCLUDE_DIRS})
 target_link_libraries(vilici
                       ${CMAKE_THREAD_LIBS_INIT}
                       freetype
-                      ${Fontconfig_LIBRARIES})
+                      ${Fontconfig_LIBRARIES}
+                      ${Libinput_LIBRARIES}
+                      ${UDEV_LIBRARIES})
 
 # ##############################################################################
 # packaging ##################################################################

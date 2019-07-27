@@ -5,6 +5,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <array>
 #include <map>
 #include <string>
 
@@ -21,8 +22,10 @@ extern FT_Library ft_library_;
 extern FT_Face regular_, bold_, ital_, bold_ital_;
 
 bool init();
+bool term();
 
-void render(unsigned &cx, unsigned &cy, const std::string &text);
+std::array<unsigned, 2> render(const unsigned &cx, const unsigned &cy,
+                               const std::string &text);
 } // namespace font
 
 #endif // VILICI_FONT_HPP_

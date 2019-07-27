@@ -48,6 +48,6 @@ void fb::swap() {
 }
 
 void fb::clear() {
-  std::fill_n(buff, info.xres * info.yres,
-              config::cfg["color"]["background"].as<uint32_t>());
+  // std::fill_n(buff, info.xres * info.yres,
+  //             config::cfg["color"]["background"].as<uint32_t>());
 }

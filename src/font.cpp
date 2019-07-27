@@ -4,6 +4,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <array>
 #include <codecvt>
 #include <iostream>
 #include <map>
@@ -102,7 +103,7 @@ bool font::init() {
     warning("No Bold Italic font style found");
   }
 
-  if (config::cfg["font"].find("px") != config::cfg["font"].end()) {
+  if (config::cfg["font"].has("px")) {
     unsigned px_height = config::cfg["font"]["px"].as<unsigned>();
     if (FT_Set_Pixel_Sizes(regular_, 0, px_height)) {
       warning("Failed to set Regular font face to {}px size", px_height);
@@ -118,11 +119,10 @@ bool font::init() {
         FT_Set_Pixel_Sizes(bold_ital_, 0, px_height)) {
       warning("Failed to set Bold Italic font face to {}px size", px_height);
     }
-  } else if (config::cfg["font"].find("px height") !=
-             config::cfg["font"].end()) {
+  } else if (config::cfg["font"].has("px height")) {
     unsigned px_height = config::cfg["font"]["px"].as<unsigned>();
     unsigned px_width = 0;
-    if (config::cfg["font"].find("px width") != config::cfg["font"].end()) {
+    if (config::cfg["font"].has("px width")) {
       px_width = config::cfg["font"]["px width"].as<unsigned>();
     }
     if (FT_Set_Pixel_Sizes(regular_, px_width, px_height)) {
@@ -144,7 +144,7 @@ bool font::init() {
       warning("Failed to set Bold Italic font face to {}x{}px size", px_width,
               px_height);
     }
-  } else if (config::cfg["font"].find("pt") != config::cfg["font"].end()) {
+  } else if (config::cfg["font"].has("pt")) {
     long pt = static_cast<long>(config::cfg["font"]["pt"].as<double>() * 64);
     unsigned horiz_dpi = static_cast<unsigned>(fb::horiz_dpi());
     unsigned vert_dpi = static_cast<unsigned>(fb::vert_dpi());
@@ -179,7 +179,10 @@ bool font::init() {
   return true;
 }
 
-void font::render(unsigned &cx, unsigned &cy, const std::string &text) {
+bool font::term() { return true; }
+
+std::array<unsigned, 2> font::render(const unsigned &cx, const unsigned &cy,
+                                     const std::string &text) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   std::wstring wtext = converter.from_bytes(text);
   uint32_t base_fg = config::cfg["color"]["foreground"].as<uint32_t>();
@@ -221,4 +224,5 @@ void font::render(unsigned &cx, unsigned &cy, const std::string &text) {
     }
     x += (*face)->glyph->advance.x >> 6;
   }
+  return {x - cx, y - cy};
 }

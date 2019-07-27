@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "event.hpp"
 #include "fb.hpp"
 #include "font.hpp"
 #include "log.hpp"
@@ -10,23 +11,23 @@ int main(int argc, char *argv[]) {
   fb::init();
   config::load();
   font::init();
+  event::init();
+
   fb::clear();
   fb::swap();
-  unsigned x = 0, y = 0;
-  for (std::size_t i = 0; i < fb::info.xres; ++i) {
-    fb::px(i, y, 0xffffff);
-  }
-  font::render(x, y, "Hello World!");
+  font::render(0, 0, "Hello World!");
   fb::swap();
-  // for (auto &it : font::font_files_) {
-  //   std::cout << it.first << "::" << it.second << '\n';
-  // }
-  // for (auto &it : config::cfg) {
-  //   std::cout << it.first << "::\n";
-  //   for (auto &kv : it.second) {
-  //     std::cout << kv.first << ':' << kv.second.as<std::string>() << '\n';
-  //   }
-  // }
+  while (true) {
+    event::poll();
+    while (event::keys.size() != 0) {
+      std::cout << "KEY:" << static_cast<char>(event::keys.front()) << ":"
+                << static_cast<unsigned>(event::keys.front()) << "\n";
+      event::keys.pop();
+    }
+  }
+
+  event::term();
+  font::term();
   fb::term();
   logger::term();
   return 0;
