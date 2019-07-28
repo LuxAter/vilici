@@ -80,19 +80,22 @@ find_package(Threads REQUIRED)
 find_package(Fontconfig REQUIRED)
 find_package(Libinput REQUIRED)
 find_package(udev REQUIRED)
+find_package(Libevdev REQUIRED)
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/freetype2)
 target_include_directories(
   vilici
   PRIVATE ${PROJECT_SOURCE_DIR}/external/freetype2/include
           ${Fontconfig_INCLUDE_DIRS}
           ${Libinput_INCLUDE_DIRS}
-          ${UDEV_INCLUDE_DIRS})
+          ${UDEV_INCLUDE_DIRS}
+          ${LIBEVDEV_INCLUDE_DIRS})
 target_link_libraries(vilici
                       ${CMAKE_THREAD_LIBS_INIT}
                       freetype
                       ${Fontconfig_LIBRARIES}
                       ${Libinput_LIBRARIES}
-                      ${UDEV_LIBRARIES})
+                      ${UDEV_LIBRARIES}
+                      ${LIBEVDEV_LIBRARIES})
 
 # ##############################################################################
 # packaging ##################################################################

@@ -1,17 +1,26 @@
 #ifndef VILICI_EVENT_HPP_
 #define VILICI_EVENT_HPP_
 
-#include <queue>
+#include <libinput.h>
+#include <libudev.h>
 
-#include "key_codes.hpp"
+#include <bitset>
+#include <cerrno>
+#include <queue>
 
 namespace event {
 extern std::queue<unsigned> keys;
+extern std::bitset<255> key_state_;
+extern bool caps_lock_;
 
 bool init();
 bool term();
 
-void poll();
+unsigned scan_to_key(const unsigned &scancode);
+
+void handle_events();
+
+void poller();
 
 } // namespace event
 

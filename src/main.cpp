@@ -15,14 +15,20 @@ int main(int argc, char *argv[]) {
 
   fb::clear();
   fb::swap();
-  font::render(0, 0, "Hello World!");
+  unsigned x = 0, y = 0;
   fb::swap();
   while (true) {
-    event::poll();
+    event::poller();
     while (event::keys.size() != 0) {
-      std::cout << "KEY:" << static_cast<char>(event::keys.front()) << ":"
-                << static_cast<unsigned>(event::keys.front()) << "\n";
+      // std::cout << "KEY:" << static_cast<char>(event::keys.front()) << ":"
+      //           << static_cast<unsigned>(event::keys.front()) << "\n";
+      auto step = font::render(
+          x, y, std::string(1, static_cast<char>(event::keys.front())));
+      x += step[0];
+      y += step[1];
+      // std::cout << x << ',' << y << "\n";
       event::keys.pop();
+      fb::swap();
     }
   }
 
