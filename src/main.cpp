@@ -20,12 +20,14 @@ int main(int argc, char *argv[]) {
   while (true) {
     event::poller();
     while (event::keys.size() != 0) {
-      // std::cout << "KEY:" << static_cast<char>(event::keys.front()) << ":"
-      //           << static_cast<unsigned>(event::keys.front()) << "\n";
-      auto step = font::render(
-          x, y, std::string(1, static_cast<char>(event::keys.front())));
-      x += step[0];
-      y += step[1];
+      std::cout << "KEY:" << static_cast<char>(event::keys.front()) << ":"
+                << static_cast<unsigned>(event::keys.front()) << "\n";
+      if (event::keys.front() >= 32 && event::keys.front() <= 126) {
+        // auto step = font::render(
+        //     x, y, std::string(1, static_cast<char>(event::keys.front())));
+        // x += step[0];
+        // y += step[1];
+      }
       // std::cout << x << ',' << y << "\n";
       event::keys.pop();
       fb::swap();

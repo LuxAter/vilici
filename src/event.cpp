@@ -34,6 +34,8 @@
 #include <cstring>
 #include <ctime>
 
+#include "log.hpp"
+
 namespace event {
 std::queue<unsigned> keys;
 std::bitset<255> key_state_;
@@ -105,7 +107,7 @@ bool event::term() {
 
 unsigned event::scan_to_key(const unsigned &scancode) {
   bool capital =
-      key_state_[KEY_LEFTSHIFT] || key_state_[KEY_RIGHTSHIFT] || caps_lock_;
+      (key_state_[KEY_LEFTSHIFT] || key_state_[KEY_RIGHTSHIFT]) != caps_lock_;
   switch (scancode) {
   case KEY_ESC:
     return VILICI_KEY_ESCAPE;
@@ -131,6 +133,8 @@ unsigned event::scan_to_key(const unsigned &scancode) {
     return capital ? ')' : '0';
   case KEY_MINUS:
     return capital ? '_' : '-';
+  case KEY_EQUAL:
+    return capital ? '+' : '=';
   case KEY_BACKSPACE:
     return VILICI_KEY_BACKSPACE;
   case KEY_TAB:
@@ -159,6 +163,8 @@ unsigned event::scan_to_key(const unsigned &scancode) {
     return capital ? '{' : '[';
   case KEY_RIGHTBRACE:
     return capital ? '}' : ']';
+  case KEY_BACKSLASH:
+    return capital ? '|' : '\\';
   case KEY_ENTER:
     return VILICI_KEY_ENTER;
   case KEY_A:
@@ -241,8 +247,60 @@ unsigned event::scan_to_key(const unsigned &scancode) {
     return VILICI_KEY_RIGHT;
   case KEY_DOWN:
     return VILICI_KEY_DOWN;
+  case KEY_INSERT:
+    return VILICI_KEY_INSERT;
+  case KEY_SYSRQ:
+    return VILICI_KEY_PRINT_SCREEN;
+  case KEY_RIGHTMETA:
+  case KEY_LEFTMETA:
+    return VILICI_KEY_META;
+  case KEY_LEFTCTRL:
+  case KEY_RIGHTCTRL:
+    return VILICI_KEY_CTRL;
+  case KEY_LEFTALT:
+  case KEY_RIGHTALT:
+    return VILICI_KEY_ALT;
+  case KEY_HOME:
+    return VILICI_KEY_HOME;
+  case KEY_END:
+    return VILICI_KEY_END;
+  case KEY_PAGEUP:
+    return VILICI_KEY_PAGE_UP;
+  case KEY_PAGEDOWN:
+    return VILICI_KEY_PAGE_DOWN;
+  case KEY_LEFTSHIFT:
+  case KEY_RIGHTSHIFT:
+  case KEY_CAPSLOCK:
+    return VILICI_KEY_ERR;
+  case KEY_MUTE:
+    return VILICI_KEY_MUTE;
+  case KEY_VOLUMEDOWN:
+    return VILICI_KEY_VOLUME_DOWN;
+  case KEY_VOLUMEUP:
+    return VILICI_KEY_VOLUME_UP;
+  case KEY_NEXTSONG:
+    return VILICI_KEY_NEXT_SONG;
+  case KEY_PLAYPAUSE:
+    return VILICI_KEY_PAUSE_PLAY;
+  case KEY_PREVIOUSSONG:
+    return VILICI_KEY_PREVIOUS_SONG;
+  case KEY_BRIGHTNESSDOWN:
+    return VILICI_KEY_BRIGHTNESS_DOWN;
+  case KEY_BRIGHTNESSUP:
+    return VILICI_KEY_BRIGHTNESS_UP;
   default:
-    return scancode + 255;
+    return scancode + 1000;
+  }
+}
+
+void event::handle_key_hold_down() {
+  if (key_state_.any()) {
+    for (std::size_t i = 0; i < key_state_.size(); ++i) {
+      unsigned keycode = VILICI_KEY_ERR;
+      if (key_state_[i] && (keycode = scan_to_key(i)) != VILICI_KEY_ERR) {
+        keys.push(keycode);
+      }
+    }
   }
 }
 
@@ -258,15 +316,9 @@ void event::handle_events() {
           LIBINPUT_KEY_STATE_PRESSED) {
         int scan = libinput_event_keyboard_get_key(kb);
         key_state_.set(scan);
-        switch (scan) {
-        case KEY_CAPSLOCK:
-          caps_lock_ = !caps_lock_;
-        default: {
-          unsigned keycode = scan_to_key(scan);
-          if (keycode != VILICI_KEY_ERR) {
-            keys.push(keycode);
-          }
-        }
+        unsigned keycode = scan_to_key(scan);
+        if (keycode != VILICI_KEY_ERR) {
+          keys.push(keycode);
         }
       } else {
         key_state_.reset(libinput_event_keyboard_get_key(kb));
@@ -279,6 +331,7 @@ void event::handle_events() {
     libinput_event_destroy(ev);
     libinput_dispatch(li_);
   }
+  handle_key_hold_down();
 }
 
 void event::poller() {

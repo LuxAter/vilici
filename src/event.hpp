@@ -18,6 +18,7 @@ bool term();
 
 unsigned scan_to_key(const unsigned &scancode);
 
+void handle_key_hold_down();
 void handle_events();
 
 void poller();
