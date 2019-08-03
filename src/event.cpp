@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -34,12 +35,14 @@
 #include <cstring>
 #include <ctime>
 
+#include "config.hpp"
 #include "log.hpp"
 
 namespace event {
 std::queue<unsigned> keys;
 std::bitset<255> key_state_;
-bool caps_lock_ = false;
+bool caps_lock_ = false, capital_ = false;
+std::size_t tick_count_ = 0, repeat_delay_ = 50;
 } // namespace event
 
 static int open_restricted(const char *path, int flags, void *user_data) {
@@ -90,6 +93,11 @@ bool event::init() {
   term.c_lflag &= ~ICANON;
   tcsetattr(0, TCSANOW, &term);
   printf("\033[?25l\n");
+
+  if (config::cfg.has("input.repeat delay")) {
+    repeat_delay_ = config::cfg["input"]["repeat delay"].as<std::size_t>();
+  }
+
   return true;
 }
 
@@ -106,111 +114,109 @@ bool event::term() {
 }
 
 unsigned event::scan_to_key(const unsigned &scancode) {
-  bool capital =
-      (key_state_[KEY_LEFTSHIFT] || key_state_[KEY_RIGHTSHIFT]) != caps_lock_;
   switch (scancode) {
   case KEY_ESC:
     return VILICI_KEY_ESCAPE;
   case KEY_1:
-    return capital ? '!' : '1';
+    return capital_ ? '!' : '1';
   case KEY_2:
-    return capital ? '@' : '2';
+    return capital_ ? '@' : '2';
   case KEY_3:
-    return capital ? '#' : '3';
+    return capital_ ? '#' : '3';
   case KEY_4:
-    return capital ? '$' : '4';
+    return capital_ ? '$' : '4';
   case KEY_5:
-    return capital ? '%' : '5';
+    return capital_ ? '%' : '5';
   case KEY_6:
-    return capital ? '^' : '6';
+    return capital_ ? '^' : '6';
   case KEY_7:
-    return capital ? '&' : '7';
+    return capital_ ? '&' : '7';
   case KEY_8:
-    return capital ? '*' : '8';
+    return capital_ ? '*' : '8';
   case KEY_9:
-    return capital ? '(' : '9';
+    return capital_ ? '(' : '9';
   case KEY_0:
-    return capital ? ')' : '0';
+    return capital_ ? ')' : '0';
   case KEY_MINUS:
-    return capital ? '_' : '-';
+    return capital_ ? '_' : '-';
   case KEY_EQUAL:
-    return capital ? '+' : '=';
+    return capital_ ? '+' : '=';
   case KEY_BACKSPACE:
     return VILICI_KEY_BACKSPACE;
   case KEY_TAB:
     return VILICI_KEY_TAB;
   case KEY_Q:
-    return capital ? 'Q' : 'q';
+    return capital_ ? 'Q' : 'q';
   case KEY_W:
-    return capital ? 'W' : 'w';
+    return capital_ ? 'W' : 'w';
   case KEY_E:
-    return capital ? 'E' : 'e';
+    return capital_ ? 'E' : 'e';
   case KEY_R:
-    return capital ? 'R' : 'r';
+    return capital_ ? 'R' : 'r';
   case KEY_T:
-    return capital ? 'T' : 't';
+    return capital_ ? 'T' : 't';
   case KEY_Y:
-    return capital ? 'Y' : 'y';
+    return capital_ ? 'Y' : 'y';
   case KEY_U:
-    return capital ? 'U' : 'u';
+    return capital_ ? 'U' : 'u';
   case KEY_I:
-    return capital ? 'I' : 'i';
+    return capital_ ? 'I' : 'i';
   case KEY_O:
-    return capital ? 'O' : 'o';
+    return capital_ ? 'O' : 'o';
   case KEY_P:
-    return capital ? 'P' : 'p';
+    return capital_ ? 'P' : 'p';
   case KEY_LEFTBRACE:
-    return capital ? '{' : '[';
+    return capital_ ? '{' : '[';
   case KEY_RIGHTBRACE:
-    return capital ? '}' : ']';
+    return capital_ ? '}' : ']';
   case KEY_BACKSLASH:
-    return capital ? '|' : '\\';
+    return capital_ ? '|' : '\\';
   case KEY_ENTER:
     return VILICI_KEY_ENTER;
   case KEY_A:
-    return capital ? 'A' : 'a';
+    return capital_ ? 'A' : 'a';
   case KEY_S:
-    return capital ? 'S' : 's';
+    return capital_ ? 'S' : 's';
   case KEY_D:
-    return capital ? 'D' : 'd';
+    return capital_ ? 'D' : 'd';
   case KEY_F:
-    return capital ? 'F' : 'f';
+    return capital_ ? 'F' : 'f';
   case KEY_G:
-    return capital ? 'G' : 'g';
+    return capital_ ? 'G' : 'g';
   case KEY_H:
-    return capital ? 'H' : 'h';
+    return capital_ ? 'H' : 'h';
   case KEY_J:
-    return capital ? 'J' : 'j';
+    return capital_ ? 'J' : 'j';
   case KEY_K:
-    return capital ? 'K' : 'k';
+    return capital_ ? 'K' : 'k';
   case KEY_L:
-    return capital ? 'L' : 'l';
+    return capital_ ? 'L' : 'l';
   case KEY_SEMICOLON:
-    return capital ? ':' : ';';
+    return capital_ ? ':' : ';';
   case KEY_APOSTROPHE:
-    return capital ? '"' : '\'';
+    return capital_ ? '"' : '\'';
   case KEY_GRAVE:
-    return capital ? '~' : '`';
+    return capital_ ? '~' : '`';
   case KEY_Z:
-    return capital ? 'Z' : 'z';
+    return capital_ ? 'Z' : 'z';
   case KEY_X:
-    return capital ? 'X' : 'x';
+    return capital_ ? 'X' : 'x';
   case KEY_C:
-    return capital ? 'C' : 'c';
+    return capital_ ? 'C' : 'c';
   case KEY_V:
-    return capital ? 'V' : 'v';
+    return capital_ ? 'V' : 'v';
   case KEY_B:
-    return capital ? 'B' : 'b';
+    return capital_ ? 'B' : 'b';
   case KEY_N:
-    return capital ? 'N' : 'n';
+    return capital_ ? 'N' : 'n';
   case KEY_M:
-    return capital ? 'M' : 'm';
+    return capital_ ? 'M' : 'm';
   case KEY_COMMA:
-    return capital ? '<' : ',';
+    return capital_ ? '<' : ',';
   case KEY_DOT:
-    return capital ? '>' : '.';
+    return capital_ ? '>' : '.';
   case KEY_SLASH:
-    return capital ? '?' : '/';
+    return capital_ ? '?' : '/';
   case KEY_SPACE:
     return ' ';
   case KEY_F1:
@@ -319,9 +325,24 @@ void event::handle_events() {
         unsigned keycode = scan_to_key(scan);
         if (keycode != VILICI_KEY_ERR) {
           keys.push(keycode);
+        } else {
+          capital_ = (key_state_[KEY_LEFTSHIFT] ||
+                      key_state_[KEY_RIGHTSHIFT]) != caps_lock_;
         }
+        tick_count_ = 0;
       } else {
-        key_state_.reset(libinput_event_keyboard_get_key(kb));
+        switch (libinput_event_keyboard_get_key(kb)) {
+        case KEY_LEFTSHIFT:
+        case KEY_RIGHTSHIFT:
+        case KEY_CAPSLOCK:
+          key_state_.reset(libinput_event_keyboard_get_key(kb));
+          capital_ = (key_state_[KEY_LEFTSHIFT] ||
+                      key_state_[KEY_RIGHTSHIFT]) != caps_lock_;
+          break;
+        default:
+          key_state_.reset(libinput_event_keyboard_get_key(kb));
+          break;
+        }
       }
       break;
     }
@@ -331,7 +352,9 @@ void event::handle_events() {
     libinput_event_destroy(ev);
     libinput_dispatch(li_);
   }
-  handle_key_hold_down();
+  if (tick_count_ > config::cfg["input"]["repeat delay"].as<std::size_t>())
+    handle_key_hold_down();
+  tick_count_++;
 }
 
 void event::poller() {

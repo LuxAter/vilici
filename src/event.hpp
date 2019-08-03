@@ -6,12 +6,14 @@
 
 #include <bitset>
 #include <cerrno>
+#include <chrono>
 #include <queue>
 
 namespace event {
 extern std::queue<unsigned> keys;
 extern std::bitset<255> key_state_;
-extern bool caps_lock_;
+extern bool caps_lock_, capital_;
+extern std::size_t tick_count_, repeat_delay_;
 
 bool init();
 bool term();

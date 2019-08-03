@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
       }
       // std::cout << x << ',' << y << "\n";
       event::keys.pop();
-      fb::swap();
+      // fb::swap();
     }
   }
 
