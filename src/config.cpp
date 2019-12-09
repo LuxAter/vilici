@@ -85,33 +85,6 @@ config::Value config::load_ini(const std::string &config_path) {
     return Value();
   }
 }
-config::Value config::load_json(const std::string &config_path) {
-  std::fstream file(config_path);
-  if (file.is_open()) {
-    Value val;
-    return val;
-  } else {
-    return Value();
-  }
-}
-config::Value config::load_toml(const std::string &config_path) {
-  std::fstream file(config_path);
-  if (file.is_open()) {
-    Value val;
-    return val;
-  } else {
-    return Value();
-  }
-}
-config::Value config::load_yaml(const std::string &config_path) {
-  std::fstream file(config_path);
-  if (file.is_open()) {
-    Value val;
-    return val;
-  } else {
-    return Value();
-  }
-}
 
 bool config::load(const std::string &config_path) {
   if (std::filesystem::exists(config_path + ".ini")) {
